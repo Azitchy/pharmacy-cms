@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import AdminLoginPage from './pages/AdminLoginPage'
 import HomePage from './pages/HomePage'
@@ -19,10 +19,22 @@ function isAdminPath(path) {
 export default function AppRouter() {
   const [path, setPath] = useState(getPathname)
   const [publicContent, setPublicContent] = useState(defaultSiteContent)
+  const [adminUser, setAdminUser] = useState(null)
+  const [adminReady, setAdminReady] = useState(false)
   const [loginEmail, setLoginEmail] = useState('admin@medicashop.com')
   const [loginPassword, setLoginPassword] = useState('password123')
   const [loginError, setLoginError] = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
+
+  const navigate = useCallback(
+    (nextPath) => {
+      if (nextPath === path) return
+      window.history.pushState({}, '', nextPath)
+      setPath(nextPath)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    },
+    [path],
+  )
 
   useEffect(() => {
     const handlePopState = () => setPath(getPathname())
@@ -53,12 +65,54 @@ export default function AppRouter() {
     }
   }, [])
 
-  const navigate = (nextPath) => {
-    if (nextPath === path) return
-    window.history.pushState({}, '', nextPath)
-    setPath(nextPath)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+  useEffect(() => {
+    let cancelled = false
+
+    const verifyAdmin = async () => {
+      if (!isAdminPath(path)) {
+        setAdminReady(true)
+        setAdminUser(null)
+        return
+      }
+
+      const token = api.getToken()
+      if (!token) {
+        setAdminUser(null)
+        setAdminReady(true)
+        if (path !== '/admin/login') {
+          navigate('/admin/login')
+        }
+        return
+      }
+
+      setAdminReady(false)
+      try {
+        const response = await api.meAdmin()
+        if (cancelled) return
+
+        setAdminUser(response.user ?? null)
+        setAdminReady(true)
+
+        if (path === '/admin/login') {
+          navigate('/admin')
+        }
+      } catch {
+        if (cancelled) return
+        api.setToken(null)
+        setAdminUser(null)
+        setAdminReady(true)
+        if (path !== '/admin/login') {
+          navigate('/admin/login')
+        }
+      }
+    }
+
+    verifyAdmin()
+
+    return () => {
+      cancelled = true
+    }
+  }, [navigate, path])
 
   const submitAdminLogin = async (event) => {
     event.preventDefault()
@@ -68,6 +122,8 @@ export default function AppRouter() {
     try {
       const response = await api.loginAdmin(loginEmail, loginPassword)
       api.setToken(response.token)
+      setAdminUser(response.user ?? null)
+      setAdminReady(true)
       navigate('/admin')
     } catch (requestError) {
       setLoginError(requestError.message)
@@ -120,7 +176,14 @@ export default function AppRouter() {
       />
     )
   } else if (isAdminPath(path)) {
-    content = <AdminDashboardPage onNavigate={navigate} />
+    content = (
+      <AdminDashboardPage
+        onNavigate={navigate}
+        adminUser={adminUser}
+        ready={adminReady}
+        path={path}
+      />
+    )
   } else {
     content = (
       <StaticPage
@@ -142,4 +205,3 @@ export default function AppRouter() {
     </div>
   )
 }
-
