@@ -10,20 +10,22 @@ import TestimonialsSection from '../sections/TestimonialsSection'
 import TopBarSection from '../sections/TopBarSection'
 import WhyChooseSection from '../sections/WhyChooseSection'
 
-export default function HomePage() {
+export default function HomePage({ content }) {
+  const site = content ?? {}
+
   return (
     <>
-      <TopBarSection />
-      <HeroSection />
-      <AboutSection />
-      <FeaturedProductsSection />
-      <ServiceBannerSection />
-      <LatestProductsSection />
-      <PromoGridSection />
-      <WhyChooseSection />
-      <BrandStripSection />
-      <TestimonialsSection />
-      <NewsletterSection />
+      <TopBarSection content={site.topbar} />
+      <HeroSection content={site.hero} />
+      <AboutSection content={site.about} />
+      <FeaturedProductsSection content={site.featuredProducts} />
+      <ServiceBannerSection content={site.serviceBanner} />
+      <LatestProductsSection content={site.latestProducts} />
+      <PromoGridSection content={site.promoGrid} />
+      <WhyChooseSection content={site.whyChoose} />
+      <BrandStripSection content={site.brandStrip} />
+      <TestimonialsSection content={site.testimonials} />
+      <NewsletterSection content={site.newsletter} />
     </>
   )
 }

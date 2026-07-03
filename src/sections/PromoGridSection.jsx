@@ -1,11 +1,14 @@
 import { promoCards } from '../data/pharmacyData'
 
-export default function PromoGridSection() {
+export default function PromoGridSection({ content }) {
+  const promo = content ?? {}
+  const cards = promo.cards ?? promoCards
+
   return (
     <section className="py-11">
       <div className="mx-auto w-[min(1180px,calc(100%-32px))]">
         <div className="grid gap-4 lg:grid-cols-[1.12fr_1fr_1fr]">
-          {promoCards.map((card, index) => (
+          {cards.map((card, index) => (
             <article
               key={card.title}
               className={`relative min-h-[220px] overflow-hidden rounded-[24px] p-6 shadow-[0_16px_36px_rgba(17,78,68,0.08)] ${

@@ -1,19 +1,25 @@
 import SectionHeading from '../components/SectionHeading'
 import { heroStats } from '../data/pharmacyData'
 
-export default function AboutSection() {
+export default function AboutSection({ content }) {
+  const about = content ?? {}
+  const stats = about.stats ?? heroStats
+
   return (
     <section className="pt-17 py-[68px]">
       <div className="mx-auto w-[min(1180px,calc(100%-32px))]">
         <div className="grid items-center gap-7 rounded-[30px] bg-white p-8 shadow-[0_18px_46px_rgba(17,78,68,0.08)] lg:grid-cols-[1fr_1.12fr]">
           <div>
             <SectionHeading
-              eyebrow="Who we are"
-              title="With us, expect more than just a pharmacy."
-              description="We keep the layout clean and the trust signals visible so the page feels like the reference screenshot without leaning on stock imagery."
+              eyebrow={about.eyebrow ?? 'Who we are'}
+              title={about.title ?? 'With us, expect more than just a pharmacy.'}
+              description={
+                about.description ??
+                'We keep the layout clean and the trust signals visible so the page feels like the reference screenshot without leaning on stock imagery.'
+              }
             />
             <div className="mt-6 grid grid-cols-3 gap-4 max-md:grid-cols-1">
-              {heroStats.map((stat) => (
+              {stats.map((stat) => (
                 <div key={stat.label} className="rounded-[18px] bg-slate-50 p-4">
                   <strong className="block text-[28px] leading-none text-emerald-500">
                     {stat.value}

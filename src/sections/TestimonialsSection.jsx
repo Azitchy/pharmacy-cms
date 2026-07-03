@@ -1,18 +1,24 @@
 import SectionHeading from '../components/SectionHeading'
 import { testimonials } from '../data/pharmacyData'
 
-export default function TestimonialsSection() {
+export default function TestimonialsSection({ content }) {
+  const testimonialContent = content ?? {}
+  const items = testimonialContent.testimonials ?? testimonials
+
   return (
     <section className="overflow-hidden bg-[linear-gradient(rgba(28,128,115,0.2),rgba(28,128,115,0.2)),linear-gradient(135deg,#5fb0a7,#2d7c73)] py-20 text-white">
       <div className="mx-auto w-[min(1180px,calc(100%-32px))]">
         <SectionHeading
-          eyebrow="Testimonial"
-          title="What they say about us"
-          description="We use dummy testimonials to keep the visual weight and spacing aligned with the reference."
+          eyebrow={testimonialContent.eyebrow ?? 'Testimonial'}
+          title={testimonialContent.title ?? 'What they say about us'}
+          description={
+            testimonialContent.description ??
+            'We use dummy testimonials to keep the visual weight and spacing aligned with the reference.'
+          }
           align="center"
         />
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          {testimonials.map((testimonial) => (
+          {items.map((testimonial) => (
             <article key={testimonial.name} className="rounded-[20px] bg-white/95 p-6 text-slate-800 shadow-[0_14px_30px_rgba(17,78,68,0.14)]">
               <p className="leading-7 text-slate-500">{testimonial.quote}</p>
               <div className="mt-5 flex items-center gap-3">

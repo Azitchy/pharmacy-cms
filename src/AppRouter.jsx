@@ -1,20 +1,56 @@
 import { useEffect, useState } from 'react'
-import FooterSection from './sections/FooterSection'
-import HeaderSection from './sections/HeaderSection'
+import AdminDashboardPage from './pages/AdminDashboardPage'
+import AdminLoginPage from './pages/AdminLoginPage'
 import HomePage from './pages/HomePage'
 import StaticPage from './pages/StaticPage'
+import FooterSection from './sections/FooterSection'
+import HeaderSection from './sections/HeaderSection'
+import { api } from './lib/api'
+import { defaultSiteContent, sectionsToSiteContent } from './lib/siteContent'
 
 function getPathname() {
   return window.location.pathname || '/'
 }
 
+function isAdminPath(path) {
+  return path === '/admin' || path === '/admin/login' || path.startsWith('/admin/')
+}
+
 export default function AppRouter() {
   const [path, setPath] = useState(getPathname)
+  const [publicContent, setPublicContent] = useState(defaultSiteContent)
+  const [loginEmail, setLoginEmail] = useState('admin@medicashop.com')
+  const [loginPassword, setLoginPassword] = useState('password123')
+  const [loginError, setLoginError] = useState('')
+  const [loginLoading, setLoginLoading] = useState(false)
 
   useEffect(() => {
     const handlePopState = () => setPath(getPathname())
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadPublicContent = async () => {
+      try {
+        const response = await api.fetchPublicContent()
+        if (!cancelled) {
+          setPublicContent(sectionsToSiteContent(response.data ?? []))
+        }
+      } catch {
+        if (!cancelled) {
+          setPublicContent(defaultSiteContent)
+        }
+      }
+    }
+
+    loadPublicContent()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const navigate = (nextPath) => {
@@ -24,9 +60,25 @@ export default function AppRouter() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const submitAdminLogin = async (event) => {
+    event.preventDefault()
+    setLoginError('')
+    setLoginLoading(true)
+
+    try {
+      const response = await api.loginAdmin(loginEmail, loginPassword)
+      api.setToken(response.token)
+      navigate('/admin')
+    } catch (requestError) {
+      setLoginError(requestError.message)
+    } finally {
+      setLoginLoading(false)
+    }
+  }
+
   let content
   if (path === '/') {
-    content = <HomePage />
+    content = <HomePage content={publicContent} />
   } else if (path === '/about') {
     content = (
       <StaticPage
@@ -55,6 +107,20 @@ export default function AppRouter() {
         description="This placeholder route makes the menu complete and keeps the navigation behavior clear."
       />
     )
+  } else if (path === '/admin/login') {
+    content = (
+      <AdminLoginPage
+        email={loginEmail}
+        password={loginPassword}
+        error={loginError}
+        loading={loginLoading}
+        onEmailChange={setLoginEmail}
+        onPasswordChange={setLoginPassword}
+        onSubmit={submitAdminLogin}
+      />
+    )
+  } else if (isAdminPath(path)) {
+    content = <AdminDashboardPage onNavigate={navigate} />
   } else {
     content = (
       <StaticPage
@@ -64,11 +130,16 @@ export default function AppRouter() {
     )
   }
 
+  if (isAdminPath(path)) {
+    return <div className="app-shell">{content}</div>
+  }
+
   return (
     <div className="app-shell">
-      <HeaderSection path={path} onNavigate={navigate} />
+      <HeaderSection path={path} onNavigate={navigate} content={publicContent.header} />
       <main>{content}</main>
-      <FooterSection onNavigate={navigate} />
+      <FooterSection onNavigate={navigate} content={publicContent.footer} />
     </div>
   )
 }
+
